@@ -1,0 +1,32 @@
+#!/bin/bash
+
+NAMESPACE="cnpoadfyk0ca"
+BUCKET_NAME="ilsan-bucket"
+BASE_DIR="/nasbackup/backupLT40"
+LOG_FILE="/var/log/oci_upload_lt_09_to_12.log"
+EMAIL="jungho.lee@idatabank.com"
+
+FOLDERS=("LT09" "LT10" "LT11" "LT12")
+
+echo "OCI Upload Log - $(date)" > "$LOG_FILE"
+echo "-------------------------------------------" >> "$LOG_FILE"
+
+for folder in "${FOLDERS[@]}"; do
+    SRC_DIR="$BASE_DIR/$folder"
+    START_TIME=$(date "+%Y-%m-%d %H:%M:%S")
+    echo "${START_TIME} Starting upload for $SRC_DIR..." | tee -a "$LOG_FILE"
+
+oci os object bulk-upload -ns "$NAMESPACE" -bn "$BUCKET_NAME" --src-dir "$SRC_DIR" --prefix "$folder/" --no-overwrite
+
+
+    if [ $? -eq 0 ]; then
+        END_TIME=$(date "+%Y-%m-%d %H:%M:%S")
+        echo "[${END_TIME}] Successfully uploaded $SRC_DIR to $BUCKET_NAME/$folder/" | tee -a "$LOG_FILE"
+    else
+        END_TIME=$(date "+%Y-%m-%d %H:%M:%S")
+        echo "[${END_TIME}] Failed to upload $SRC_DIR" | tee -a "$LOG_FILE"
+        echo "OCI CLI upload failed for /root/sample. Check logs for details." | mail -s "OCI Upload Failure" "$EMAIL"
+
+    fi
+    echo "-------------------------------------------" >> "$LOG_FILE"
+done
