@@ -19,59 +19,25 @@ COMPUTE_METRICS = [
     "DiskBytesWritten",  # 디스크 쓰기 바이트
     "DiskIopsRead",  # 디스크 읽기 IOPS
     "DiskIopsWritten",  # 디스크 쓰기 IOPS
-    "LoadAverage",  # 로드 평균
-    "MemoryAllocationStalls",  # 메모리 할당 지연
     "MemoryUtilization",  # 메모리 사용률
     "NetworksBytesIn",  # 네트워크 수신 바이트
     "NetworksBytesOut"  # 네트워크 송신 바이트
 ]
 
 VCN_METRICS1 = [
-    "VnicConntrackIsFull",  # VNIC 연결 추적 가득 차기 여부
-    "VnicConntrackUtilPercent",  # VNIC 연결 추적 활용률
-    "VnicEgressDropsConntrackFull",  # VNIC 송신 드롭 (연결 추적 가득 차기)
-    "VnicEgressDropsSecurityList",  # VNIC 송신 드롭 (보안 목록)
-    "VnicEgressDropsThrottle",  # VNIC 송신 드롭 (속도 제한)
-    "VnicEgressMirrorDropsThrottle",  # VNIC 송신 미러 드롭 (속도 제한)
     "VnicFromNetworkBytes",  # VNIC 수신 네트워크 바이트
-    "VnicFromNetworkMirrorBytes",  # VNIC 수신 네트워크 미러 바이트
-    "VnicFromNetworkMirrorPackets",  # VNIC 수신 네트워크 미러 패킷
     "VnicFromNetworkPackets"  # VNIC 수신 네트워크 패킷
 ]
 VCN_METRICS2 = [
-    "VnicIngressDropsConntrackFull",  # VNIC 수신 드롭 (연결 추적 가득 차기)
-    "VnicIngressDropsSecurityList",  # VNIC 수신 드롭 (보안 목록)
-    "VnicIngressDropsThrottle",  # VNIC 수신 드롭 (속도 제한)
-    "VnicIngressMirrorDropsConntrackFull",  # VNIC 수신 미러 드롭 (연결 추적 가득 차기)
-    "VnicIngressMirrorDropsSecurityList",  # VNIC 수신 미러 드롭 (보안 목록)
-    "VnicIngressMirrorDropsThrottle",  # VNIC 수신 미러 드롭 (속도 제한)
     "VnicToNetworkBytes",  # VNIC 송신 네트워크 바이트
-    "VnicToNetworkMirrorBytes",  # VNIC 송신 네트워크 미러 바이트
-    "VnicToNetworkMirrorPackets",  # VNIC 송신 네트워크 미러 패킷
     "VnicToNetworkPackets",  # VNIC 송신 네트워크 패킷
 ]
-OBJECTSTORAGE_METRICS = [
-    "AllRequests",  # 모든 요청
-    "ListRequests",  # 리스트 요청
-    "ObjectCount",  # 객체 수
-    "StoredBytes",  # 저장된 바이트
-    "TotalRequestLatency",  # 전체 요청 대기 시간
-]
+
 health_METRICS = [
     "instanceaccessibilitystatus",  # 모든 요청
     "instancefilesystemstatus",  # 클라이언트 오류
-
 ]
 
-VPN_METRICS = [
-    "BytesReceived",
-    "BytesSent",
-    "PacketsDiscarded",
-    "PacketsError",
-    "PacketsReceived",
-    "PacketsSent",
-    "TunnelState"
-]
 
 # 특정 메트릭의 평균값을 반환하는 함수
 def metric_summary(now, one_min_before, metric_name, namespace, compartment_ocid):
@@ -80,7 +46,7 @@ def metric_summary(now, one_min_before, metric_name, namespace, compartment_ocid
         compartment_id=compartment_ocid,  # 모니터링할 compartment ID
         summarize_metrics_data_details=oci.monitoring.models.SummarizeMetricsDataDetails(
             namespace=namespace,  # 메트릭을 조회할 namespace
-            query=f"{metric_name}[1m].mean()",  # 1분 간격으로 평균값을 계산
+            query=f"{metric_name}[5m].mean()",  # 1분 간격으로 평균값을 계산
             start_time=one_min_before,  # 조회 시작 시간
             end_time=now  # 조회 종료 시간
         )
@@ -91,7 +57,7 @@ def metric_summary(now, one_min_before, metric_name, namespace, compartment_ocid
 # 메트릭 데이터를 가져오는 함수
 def get_metrics():
     now = (datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))  # 현재 시간
-    ONE_MIN_BEFORE = (datetime.utcnow() - timedelta(minutes=60)).isoformat() + 'Z'  # 1분 전 시간
+    ONE_MIN_BEFORE = (datetime.utcnow() - timedelta(minutes=30)).isoformat() + 'Z'  # 1분 전 시간
 
     # COMPUTE_METRICS에 정의된 메트릭에 대해 데이터를 조회하고 반환합니다.
     for name in COMPUTE_METRICS:
@@ -122,14 +88,6 @@ def get_metrics():
             break
 
     time.sleep(1)
-    
-    # OBJECTSTORAGE_METRICS에 정의된 객체 저장소 메트릭 조회
-    for name in OBJECTSTORAGE_METRICS:
-        summary = metric_summary(now, ONE_MIN_BEFORE, name, "oci_objectstorage", compartment_id)
-        if len(summary) > 0:
-            yield summary
-        else:
-            break
 
     # OBJECTSTORAGE_METRICS에 정의된 객체 저장소 메트릭 조회
     for name in health_METRICS:
@@ -139,14 +97,7 @@ def get_metrics():
         else:
             break
 
-    # VPN_METRICS에 정의된 객체 저장소 메트릭 조회
-    for name in VPN_METRICS:
-        summary = metric_summary(now, ONE_MIN_BEFORE, name, "oci_vpn", compartment_id)
-        if len(summary) > 0:
-            yield summary
-        else:
-            break
-
+    time.sleep(1)            
 
 
 # Prometheus와 연동되는 Exporter 클래스
@@ -193,4 +144,4 @@ if __name__ == "__main__":
     
     # 무한 루프를 돌며 메트릭을 계속 수집합니다.
     while True:
-        time.sleep(1)
+        time.sleep(5)

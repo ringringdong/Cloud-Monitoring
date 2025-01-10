@@ -10,19 +10,15 @@ compartment_id = "ocid1.compartment.oc1..aaaaaaaadoyp2j7rtd3ce5fffov4sututn2u7gb
 config = oci.config.from_file("/root/.oci/config")
 monitoring_client = oci.monitoring.MonitoringClient(config)
 
-OBJECTSTORAGE_METRICS = [
-    "AllRequests",  # 모든 요청
-    "ClientErrors",  # 클라이언트 오류
-    "FirstByteLatency",  # 첫 번째 바이트 대기 시간
-    "HeadRequests",  # 헤드 요청
-    "ListRequests",  # 리스트 요청
-    "ObjectCount",  # 객체 수
-    "PutRequests",  # PUT 요청
-    "StoredBytes",  # 저장된 바이트
-    "TotalRequestLatency",  # 전체 요청 대기 시간
-    "UncommittedParts"  # 커밋되지 않은 부분
+VPN_METRICS = [
+    "TunnelState",
+    "BytesReceived",
+    "BytesSent",
+    "PacketsDiscarded",
+    "PacketsError",
+    "PacketsReceived",
+    "PacketsSent"
 ]
-
 # function to retrieve mean statistic for specific namespace and metric
 def metric_summary(now, one_min_before, metric_name, namespace, compartment_ocid):
     summarize_metrics_data_response = monitoring_client.summarize_metrics_data(
@@ -37,11 +33,11 @@ def metric_summary(now, one_min_before, metric_name, namespace, compartment_ocid
 
 def get_metrics():
     now = (datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
-    ONE_MIN_BEFORE = (datetime.utcnow() - timedelta(minutes=1)).isoformat() + 'Z'
+    ONE_MIN_BEFORE = (datetime.utcnow() - timedelta(minutes=60)).isoformat() + 'Z'
 
     # Collect only Compute metrics
-    for name in OBJECTSTORAGE_METRICS:
-        summary = metric_summary(now, ONE_MIN_BEFORE, name, "oci_objectstorage", compartment_id)
+    for name in VPN_METRICS:
+        summary = metric_summary(now, ONE_MIN_BEFORE, name, "oci_vpn", compartment_id)
         if len(summary) > 0:
             yield summary
         else:
@@ -61,10 +57,10 @@ class OCIExporter(object):
                 dimensions = metric.dimensions
                 if dimensions.get('resourceDisplayName') is not None:
                     labels = ['resource_name']
-                    resource_id = dimensions.get('resourceDisplayName')
+                    resource_id = dimensions.get('resourceDisplayName') or "unknown"
                 else:
                     labels = ['resource_id']
-                    resource_id = dimensions.get('resourceId')
+                    resource_id = dimensions.get('resourceId') or "unknown"
 
                 metadata = metric.metadata
                 description = metadata.get('displayName')
@@ -76,7 +72,7 @@ class OCIExporter(object):
 
 
 if __name__ == "__main__":
-    start_http_server(8070)
+    start_http_server(9080)
     REGISTRY.register(OCIExporter())
     while True:
-        time.sleep(1)
+        time.sleep(5)
