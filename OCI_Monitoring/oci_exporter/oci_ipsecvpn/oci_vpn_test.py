@@ -10,12 +10,15 @@ compartment_id = "ocid1.compartment.oc1..aaaaaaaadoyp2j7rtd3ce5fffov4sututn2u7gb
 config = oci.config.from_file("/root/.oci/config")
 monitoring_client = oci.monitoring.MonitoringClient(config)
 
-OBJECTSTORAGE_METRICS = [
-    "ObjectCount",  # 객체 수
-    "StoredBytes",  # 저장된 바이트
-    "AllRequests"  # 모든 요청
+VPN_METRICS = [
+    "TunnelState",
+    "BytesReceived",
+    "BytesSent",
+    "PacketsDiscarded",
+    "PacketsError",
+    "PacketsReceived",
+    "PacketsSent"
 ]
-
 # function to retrieve mean statistic for specific namespace and metric
 def metric_summary(now, one_min_before, metric_name, namespace, compartment_ocid):
     summarize_metrics_data_response = monitoring_client.summarize_metrics_data(
@@ -30,11 +33,11 @@ def metric_summary(now, one_min_before, metric_name, namespace, compartment_ocid
 
 def get_metrics():
     now = (datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
-    ONE_MIN_BEFORE = (datetime.utcnow() - timedelta(minutes=90)).isoformat() + 'Z'
+    ONE_MIN_BEFORE = (datetime.utcnow() - timedelta(minutes=60)).isoformat() + 'Z'
 
     # Collect only Compute metrics
-    for name in OBJECTSTORAGE_METRICS:
-        summary = metric_summary(now, ONE_MIN_BEFORE, name, "oci_objectstorage", compartment_id)
+    for name in VPN_METRICS:
+        summary = metric_summary(now, ONE_MIN_BEFORE, name, "oci_vpn", compartment_id)
         if len(summary) > 0:
             yield summary
         else:
@@ -52,13 +55,18 @@ class OCIExporter(object):
             for metric in metrics:
                 name = f'oci_{metric.name.lower()}'
                 dimensions = metric.dimensions
-                if dimensions.get('resourceDisplayName') is not None:
-                    labels = ['resource_name']
-                    resource_id = dimensions.get('resourceDisplayName')
+                
+                # 터널을 구별할 수 있는 ID 찾기
+                if 'resourceDisplayName' in dimensions:
+                    resource_id = dimensions['resourceDisplayName']
+                elif 'id' in dimensions:  # 터널 ID가 있을 경우 사용
+                    resource_id = dimensions['id']
+                elif 'resourceId' in dimensions:
+                    resource_id = dimensions['resourceId']
                 else:
-                    labels = ['resource_id']
-                    resource_id = dimensions.get('resourceId')
-
+                    resource_id = "unknown"
+                
+                labels = ['resource_id']
                 metadata = metric.metadata
                 description = metadata.get('displayName')
                 value = metric.aggregated_datapoints[0].value
@@ -68,8 +76,9 @@ class OCIExporter(object):
                 yield g
 
 
+
 if __name__ == "__main__":
-    start_http_server(9070)
+    start_http_server(8070)
     REGISTRY.register(OCIExporter())
     while True:
         time.sleep(5)
