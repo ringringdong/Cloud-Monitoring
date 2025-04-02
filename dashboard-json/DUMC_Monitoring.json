@@ -31,7 +31,7 @@
       },
       "id": 8,
       "panels": [],
-      "title": "Target Node Status",
+      "title": "DUMC OCI Bastion Status",
       "type": "row"
     },
     {
@@ -48,7 +48,7 @@
             {
               "options": {
                 "0": {
-                  "color": "dark-purple",
+                  "color": "green",
                   "index": 0,
                   "text": "UP"
                 },
@@ -115,7 +115,7 @@
         "colorMode": "background",
         "graphMode": "none",
         "justifyMode": "center",
-        "orientation": "horizontal",
+        "orientation": "vertical",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
@@ -133,7 +133,7 @@
         {
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "oci_instanceaccessibilitystatus{job=\"Bastion_CloudCompute_Exporter_info_Metrics\",instance=\"193.123.237.96:9999\"}",
+          "expr": "oci_instanceaccessibilitystatus{customer=\"dumc\",job=\"OCI_Bastion_CloudCompute_Custom_Exporter_info_Metrics\",instance=\"193.123.237.96:9999\",resource_name=\"duk_pub_bastion_svr\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{resource_name}}",
@@ -153,8 +153,9 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-BlPu"
+            "mode": "continuous-GrYlRd"
           },
+          "decimals": 2,
           "mappings": [],
           "max": 100,
           "min": 0,
@@ -215,14 +216,14 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "(1 - irate(node_cpu_seconds_total{mode=\"idle\",job=\"10.175_Target_node_exporter_info\"}[1m])) * 100",
+          "expr": "(1 - avg(irate(node_cpu_seconds_total{mode=\"idle\",job=\"Bastion_Node_Exporter_Info_Metrics\",customer=\"dumc\"}[1m]))) * 100",
           "interval": "",
           "legendFormat": "Real",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Target CPU  Usage",
+      "title": "NAS CPU  Usage",
       "type": "bargauge"
     },
     {
@@ -233,7 +234,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-BlPu"
+            "mode": "continuous-GrYlRd"
           },
           "displayName": "Nasbk",
           "mappings": [],
@@ -257,7 +258,7 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 3,
         "w": 15,
         "x": 9,
         "y": 1
@@ -267,8 +268,8 @@
         "displayMode": "gradient",
         "legend": {
           "calcs": [],
-          "displayMode": "list",
-          "placement": "right",
+          "displayMode": "table",
+          "placement": "bottom",
           "showLegend": false
         },
         "maxVizHeight": 50,
@@ -299,7 +300,7 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "label_replace(\r\n  (1 - (node_filesystem_free_bytes{job=\"10.175_Target_node_exporter_info\", mountpoint=\"/pacs_backup/Nasbk\"} / node_filesystem_size_bytes{job=\"10.175_Target_node_exporter_info\",mountpoint=\"/pacs_backup/Nasbk\"})) * 100, \r\n  \"mountpoint\", \r\n  \"$1\", \r\n  \"mountpoint\", \r\n  \"/pacs_backup/Nasbk/(.*)\"\r\n)\r\n",
+          "expr": "label_replace(\r\n  (1 - (node_filesystem_free_bytes{job=\"Bastion_Node_Exporter_Info_Metrics\", mountpoint=\"/pacs_backup/Nasbk\",customer=\"dumc\"} / node_filesystem_size_bytes{job=\"Bastion_Node_Exporter_Info_Metrics\",mountpoint=\"/pacs_backup/Nasbk\",customer=\"dumc\"})) * 100, \r\n  \"mountpoint\", \r\n  \"$1\", \r\n  \"mountpoint\", \r\n  \"/pacs_backup/Nasbk/(.*)\"\r\n)\r\n",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "{{mountpoint}}",
@@ -308,7 +309,7 @@
           "useBackend": false
         }
       ],
-      "title": "Target NAS Disk Useage",
+      "title": "NAS Disk Useage (%)",
       "type": "bargauge"
     },
     {
@@ -319,7 +320,7 @@
       "fieldConfig": {
         "defaults": {
           "color": {
-            "mode": "continuous-BlPu"
+            "mode": "continuous-GrYlRd"
           },
           "mappings": [],
           "max": 100,
@@ -381,15 +382,97 @@
           },
           "editorMode": "code",
           "exemplar": true,
-          "expr": "(1 - (node_memory_MemAvailable_bytes{job=\"10.175_Target_node_exporter_info\"} / node_memory_MemTotal_bytes{job=\"10.175_Target_node_exporter_info\"})) * 100",
+          "expr": "(1 - (node_memory_MemAvailable_bytes{job=\"Bastion_Node_Exporter_Info_Metrics\"} / node_memory_MemTotal_bytes{job=\"Bastion_Node_Exporter_Info_Metrics\",customer=\"dumc\"})) * 100",
           "interval": "",
           "legendFormat": "Real",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Target RAM  Usage",
+      "title": "NAS RAM  Usage",
       "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "deesvak2hljpcf"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 15,
+        "x": 9,
+        "y": 4
+      },
+      "id": 25,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {
+          "titleSize": 30
+        },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.4.0",
+      "targets": [
+        {
+          "editorMode": "code",
+          "expr": "node_filesystem_size_bytes{customer=\"dumc\",job=\"Bastion_Node_Exporter_Info_Metrics\",mountpoint=\"/pacs_backup/Nasbk\",device=\"/dev/sdf2\"} - node_filesystem_free_bytes{customer=\"dumc\",job=\"Bastion_Node_Exporter_Info_Metrics\",mountpoint=\"/pacs_backup/Nasbk\",device=\"/dev/sdf2\"}",
+          "interval": "",
+          "legendFormat": "Used  |                   ",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "deesvak2hljpcf"
+          },
+          "editorMode": "code",
+          "expr": "node_filesystem_size_bytes{customer=\"dumc\",job=\"Bastion_Node_Exporter_Info_Metrics\",mountpoint=\"/pacs_backup/Nasbk\",device=\"/dev/sdf2\"}",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "Total  | ",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "NAS Disk Useage (Bytes)",
+      "type": "stat"
     },
     {
       "datasource": {
@@ -419,6 +502,9 @@
             },
             "insertNulls": false,
             "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
             "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
@@ -493,8 +579,8 @@
       "options": {
         "legend": {
           "calcs": [
-            "max",
-            "min"
+            "min",
+            "max"
           ],
           "displayMode": "table",
           "placement": "right",
@@ -513,7 +599,7 @@
             "uid": "deesvak2hljpcf"
           },
           "editorMode": "code",
-          "expr": "irate(node_network_receive_bytes_total{job=\"10.175_Target_node_exporter_info\",device=~\"(?i)^(ens|eth).+$\"}[5m])  > 0",
+          "expr": "irate(node_network_receive_bytes_total{job=\"Bastion_Node_Exporter_Info_Metrics\",device=~\"(?i)^(ens|eth).+$\",customer=\"dumc\"}[5m])  > 0",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -527,7 +613,7 @@
             "uid": "deesvak2hljpcf"
           },
           "editorMode": "code",
-          "expr": "- irate(node_network_transmit_bytes_total{job=\"10.175_Target_node_exporter_info\",device=~\"(?i)^(ens|eth).+$\"}[5m]) < 0",
+          "expr": "- irate(node_network_transmit_bytes_total{job=\"Bastion_Node_Exporter_Info_Metrics\",device=~\"(?i)^(ens|eth).+$\",customer=\"dumc\"}[5m]) < 0",
           "format": "time_series",
           "interval": "",
           "intervalFactor": 1,
@@ -558,8 +644,8 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
+            "fillOpacity": 40,
+            "gradientMode": "opacity",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
@@ -611,7 +697,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "semi-dark-blue",
+                  "fixedColor": "green",
                   "mode": "fixed"
                 }
               }
@@ -626,7 +712,7 @@
               {
                 "id": "color",
                 "value": {
-                  "fixedColor": "#0cf2f2",
+                  "fixedColor": "yellow",
                   "mode": "fixed"
                 }
               }
@@ -643,9 +729,12 @@
       "id": 12,
       "options": {
         "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
+          "calcs": [
+            "min",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
           "showLegend": true
         },
         "tooltip": {
@@ -658,7 +747,7 @@
         {
           "editorMode": "code",
           "exemplar": false,
-          "expr": "label_replace(rate(node_disk_read_bytes_total{device=\"sdb\",job=\"10.175_Target_node_exporter_info\"}[5m]), \"device\", \"Nasbk\", \"device\", \"sdb\")\r\n",
+          "expr": "label_replace(rate(node_disk_read_bytes_total{device=\"sdf\",job=\"Bastion_Node_Exporter_Info_Metrics\",customer=\"dumc\"}[5m]), \"device\", \"Nasbk\", \"device\", \"sdf\")",
           "instant": false,
           "legendFormat": "{{device}} Read ",
           "range": true,
@@ -671,7 +760,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "label_replace(rate(node_disk_written_bytes_total{device=\"sdb\", job=\"10.175_Target_node_exporter_info\"}[5m]), \"device\", \"Nasbk\", \"device\", \"sdb\")\r\n\r\n",
+          "expr": "label_replace(rate(node_disk_written_bytes_total{device=\"sdf\",job=\"Bastion_Node_Exporter_Info_Metrics\",customer=\"dumc\"}[5m]), \"device\", \"Nasbk\", \"device\", \"sdf\")\r\n",
           "hide": false,
           "instant": false,
           "legendFormat": "{{device}} Write",
@@ -705,13 +794,13 @@
           "color": {
             "mode": "thresholds"
           },
+          "fieldMinMax": false,
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "#ffffff",
@@ -719,7 +808,7 @@
               }
             ]
           },
-          "unit": "none"
+          "unit": "locale"
         },
         "overrides": []
       },
@@ -756,7 +845,7 @@
         {
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "oci_objectcount{job=\"10.174_oci_buckit_info\"}",
+          "expr": "oci_objectcount{job=\"OCI_Bastion_CloudBuckit_Custom_Exporter_info_Metrics\",customer=\"dumc\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "__auto",
@@ -783,8 +872,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
-                "value": null
+                "color": "green"
               },
               {
                 "color": "#ffffff",
@@ -828,7 +916,7 @@
         {
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "oci_storedbytes{job=\"10.174_oci_buckit_info\"}",
+          "expr": "oci_storedbytes{job=\"OCI_Bastion_CloudBuckit_Custom_Exporter_info_Metrics\",customer=\"dumc\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
           "legendFormat": "__auto",
@@ -891,15 +979,15 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "orange",
-                "value": null
+                "color": "orange"
               },
               {
                 "color": "orange",
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "short"
         },
         "overrides": [
           {
@@ -992,10 +1080,10 @@
           },
           "disableTextWrap": false,
           "editorMode": "code",
-          "expr": "oci_objectcount{job=\"10.174_oci_buckit_info\"}",
+          "expr": "oci_objectcount{job=\"OCI_Bastion_CloudBuckit_Custom_Exporter_info_Metrics\",customer=\"dumc\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "legendFormat": "__auto",
+          "legendFormat": "{{resource_name}}",
           "range": true,
           "refId": "A",
           "useBackend": false
@@ -1060,6 +1148,7 @@
               "mode": "off"
             }
           },
+          "decimals": 0,
           "mappings": [
             {
               "options": {
@@ -1077,6 +1166,8 @@
               "type": "value"
             }
           ],
+          "max": 1,
+          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
@@ -1115,14 +1206,27 @@
       "targets": [
         {
           "disableTextWrap": false,
-          "editorMode": "builder",
-          "expr": "oci_tunnelstate",
+          "editorMode": "code",
+          "expr": "oci_tunnelstate{customer=\"dumc\",job=\"OCI_Bastion_CloudIPSecVPN_Custom_Exporter_info_Metrics\",resource_name=\"Tunnel-1\"}",
           "fullMetaSearch": false,
           "includeNullMetadata": true,
-          "legendFormat": "__auto",
+          "legendFormat": "{{resource_name}}",
           "range": true,
           "refId": "A",
           "useBackend": false
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "deesvak2hljpcf"
+          },
+          "editorMode": "code",
+          "expr": "oci_tunnelstate{customer=\"dumc\",job=\"OCI_Bastion_CloudIPSecVPN_Custom_Exporter_info_Metrics\",resource_name=\"Tunnel-2\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{resource_name}}",
+          "range": true,
+          "refId": "B"
         }
       ],
       "title": "Tunnel status",
@@ -1210,8 +1314,8 @@
       "targets": [
         {
           "editorMode": "code",
-          "expr": "oci_vpn",
-          "legendFormat": "__auto",
+          "expr": "oci_packetserror{job=\"OCI_Bastion_CloudIPSecVPN_Custom_Exporter_info_Metrics\",customer=\"dumc\",}",
+          "legendFormat": "{{resource_name}}",
           "range": true,
           "refId": "A"
         }
@@ -1238,8 +1342,8 @@
             "barAlignment": 0,
             "barWidthFactor": 0.6,
             "drawStyle": "line",
-            "fillOpacity": 0,
-            "gradientMode": "none",
+            "fillOpacity": 40,
+            "gradientMode": "opacity",
             "hideFrom": {
               "legend": false,
               "tooltip": false,
@@ -1274,9 +1378,41 @@
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "decbytes"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Sent"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Received"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "yellow",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 6,
@@ -1300,14 +1436,52 @@
       "pluginVersion": "11.4.0",
       "targets": [
         {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "deesvak2hljpcf"
+          },
           "editorMode": "code",
-          "expr": "oci_vpn",
-          "legendFormat": "__auto",
+          "expr": "oci_bytesreceived{job=\"OCI_Bastion_CloudIPSecVPN_Custom_Exporter_info_Metrics\",customer=\"dumc\",resource_name=\"Tunnel-1\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{resource_name}} Received",
+          "range": true,
+          "refId": "D"
+        },
+        {
+          "editorMode": "code",
+          "expr": "oci_bytessent{job=\"OCI_Bastion_CloudIPSecVPN_Custom_Exporter_info_Metrics\",customer=\"dumc\",resource_name=\"Tunnel-1\"}",
+          "legendFormat": "{{resource_name}} Sent",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "deesvak2hljpcf"
+          },
+          "editorMode": "code",
+          "expr": "oci_bytesreceived{job=\"OCI_Bastion_CloudIPSecVPN_Custom_Exporter_info_Metrics\",customer=\"dumc\",resource_name=\"Tunnel-2\"}",
+          "hide": false,
+          "instant": false,
+          "legendFormat": "{{resource_name}} Received",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "deesvak2hljpcf"
+          },
+          "editorMode": "code",
+          "expr": "oci_bytessent{job=\"OCI_Bastion_CloudIPSecVPN_Custom_Exporter_info_Metrics\",customer=\"dumc\",resource_name=\"Tunnel-2\"}",
+          "hide": false,
+          "legendFormat": "{{resource_name}} Sent",
+          "range": true,
+          "refId": "C"
         }
       ],
-      "title": "Tunnel Traffic",
+      "title": "Tunnel Traffic (Bytes)",
       "type": "timeseries"
     }
   ],
@@ -1323,8 +1497,8 @@
   },
   "timepicker": {},
   "timezone": "browser",
-  "title": "DUMC Monitoring",
+  "title": "DUMC_Monitoring",
   "uid": "DUMCMONITORING",
-  "version": 1,
+  "version": 16,
   "weekStart": ""
 }

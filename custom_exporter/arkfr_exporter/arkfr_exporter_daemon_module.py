@@ -27,27 +27,13 @@ def check_daemon():
 
 def update_module_list():
     """/ark/fragent/conf/module 디렉토리 내 존재하는 파일 목록을 수집하여 Prometheus 메트릭에 저장"""
-    existing_modules = set()  # 기존 모듈을 추적할 집합
-arkfr_modules_present {__name__="arkfr_modules_present", instance="172.16.10.175:9999", job="10.174_arkfr_info", module="source3"}
-
     while True:
         try:
             if os.path.exists(MODULE_PATH):
-                modules = {f for f in os.listdir(MODULE_PATH) if os.path.isdir(os.path.join(MODULE_PATH, f))}
-                new_modules = modules - existing_modules  # 새로 추가된 모듈
-                removed_modules = existing_modules - modules  # 제거된 모듈
-
-                # 새로 추가된 모듈에 대해 메트릭 업데이트
-                for module in new_modules:
-                    module_status.labels(module=module).set(1)
-
-                # 제거된 모듈에 대해 메트릭 삭제
-                for module in removed_modules:
-                    module_status.remove(module=module)
-
-                # 기존 모듈 목록 갱신
-                existing_modules = modules
-
+                modules = [f for f in os.listdir(MODULE_PATH) if os.path.isfile(os.path.join(MODULE_PATH, f))]
+                module_status.clear()  # 기존 값 초기화
+                for module in modules:
+                    module_status.labels(module=module).set(1)  # 존재하는 모듈에 대해 1 설정
         except Exception as e:
             print(f"Error updating module list: {e}")
 

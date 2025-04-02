@@ -11,9 +11,9 @@ config = oci.config.from_file("/root/.oci/config")
 monitoring_client = oci.monitoring.MonitoringClient(config)
 
 OBJECTSTORAGE_METRICS = [
-    "ObjectCount",  # 객체 수
-    "StoredBytes",  # 저장된 바이트
-    "AllRequests"  # 모든 요청
+    "ObjectCount",  
+    "StoredBytes",  
+    "AllRequests" 
 ]
 
 # function to retrieve mean statistic for specific namespace and metric
@@ -29,16 +29,16 @@ def metric_summary(now, one_min_before, metric_name, namespace, compartment_ocid
 
 
 def get_metrics():
-    now = (datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))
-    ONE_MIN_BEFORE = (datetime.utcnow() - timedelta(minutes=90)).isoformat() + 'Z'
+    now = (datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"))  # 현재 시간 (ISO 8601 형식, UTC 기준)
+    ONE_MIN_BEFORE = (datetime.utcnow() - timedelta(minutes=90)).isoformat() + 'Z'  # 90분 전 시간
 
-    # Collect only Compute metrics
+    # Object Storage 관련 메트릭만 수집
     for name in OBJECTSTORAGE_METRICS:
         summary = metric_summary(now, ONE_MIN_BEFORE, name, "oci_objectstorage", compartment_id)
-        if len(summary) > 0:
-            yield summary
+        if len(summary) > 0:  # 수집된 데이터가 있는 경우
+            yield summary  # 메트릭 데이터를 반환
         else:
-            break
+            break  # 데이터가 없으면 루프 종료
 
     time.sleep(1)
 
